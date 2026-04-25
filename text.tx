@@ -1,0 +1,57 @@
+import tempfile # this is to create temporary file so we can test the code,
+import os #so we can navigate our operating system(macOS)
+import anthropic # AI LLM we're using 
+import subproscess # how were going to terst the code
+
+We need to create mutiple functions to get what we want,
+
+1. generate_code (spec)
+    Generate code based on the provided specification, using anthropics API
+        -promt "You are a python code generator. Generate clean valid code pls"
+    -returns the code only]
+
+2. extract_code (response_text)
+    #this will extract code from response
+
+    import re #were gonna assume the code is enclosed in triiple backticks
+    # essecially the fail safe to make the response code only
+
+    we will do a pattern search and strip it 
+
+    then return what we got!
+
+3. validate syntax(code)
+    either the code is valid python or the llm halucinated,
+    return true or false!
+
+4. run_test (generated_code, test_code, timeout=10)
+    Run pytest against generated code
+
+    args:
+        generated_code: the code you'd like to test
+        test_code: the pytest test code
+        Timeout: max weait time to wait for test
+    
+    resturns:
+        {
+            passed: true/false
+            passed_count: int
+            failed count: int
+            total: int
+            output: str,
+            errors: str
+        }
+
+        #create a temporary file to hold cold and tests
+        #run pytest on these,
+        #return output
+        
+        #if failed
+            - return timeout and why it failed
+            or
+            - return why it failed
+
+5. run_pipline(spec, testcode)
+    generate -> validate -> test
+
+    return test results, code, 
