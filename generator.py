@@ -38,7 +38,21 @@ def extract_code (response_text):
 
     return(response_text.strip())
 
+
+
+def validate_syntax(code):
+    #either colid valid python or api halucinated
+
+
+    test = compile(code, 'test', 'exec')
+    if compile:
+        print("Valid python!")
+        return True
+    else:
+        print("Not valid")
+        return False
+
 response = generate_code()
 
-extract_code(response)
-
+code = extract_code(response)
+validate_syntax(code)
