@@ -52,50 +52,98 @@ def validate_syntax(code):
         print(f"✗ Syntax error: {e}")
         return False
     
-def run_test(generated_code, timeout=10):
-    #runs pytest against generated code
+def run_simple_test(generated_code, timeout=10):
     """
-    args:
-        generated_code: the code you'd like to test
-        
-        Timeout: max wait time to wait for test
+    Simple version: just run the code and see if it executes
     
-    resturns:
-        {
-            passed: true/false
-            passed_count: int
-            failed count: int
-            total: int
-            output: str,
-            errors: str
-        }
+    For "Hello World" testing
     """
+    try:
+        # Create temporary directory
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Write code to a file
+            code_path = os.path.join(tmpdir, 'generated.py')
+            with open(code_path, 'w') as f:
+                f.write(generated_code)
+            
+            print(f"\n--- Running code from {code_path} ---")
+            
+            # Execute the code
+            result = subprocess.run(
+                ['python3', code_path],
+                capture_output=True,
+                timeout=timeout,
+                text=True
+            )
+            
+            print(f"Output: {result.stdout}")
+            if result.stderr:
+                print(f"Errors: {result.stderr}")
+            
+            # Check if it ran successfully (exit code 0)
+            if result.returncode == 0:
+                print("✓ Code executed successfully!")
+                return {
+                    'passed': True,
+                    'output': result.stdout,
+                    'errors': result.stderr
+                }
+            else:
+                print("✗ Code execution failed!")
+                return {
+                    'passed': False,
+                    'output': result.stdout,
+                    'errors': result.stderr
+                }
+    
+    except subprocess.TimeoutExpired:
+        print(f"✗ Code execution timed out after {timeout}s")
+        return {
+            'passed': False,
+            'output': '',
+            'errors': f'Timeout after {timeout}s'
+        }
+    except Exception as e:
+        print(f"✗ Error: {e}")
+        return {
+            'passed': False,
+            'output': '',
+            'errors': str(e)
+        }
 
-    with tempfile.TemporaryFile(mode='w+') as f:
-        f.write(generated_code)
-        f.seek(0)
-        print('----------------------')
-        print("code from Temporary >>>>>")
-        print(f"{f.read()}")
 
-        result = subprocess.run(
-            ['python', '-m', 'pytest', f, 'v'],
-            capture_output= True,
-            timeout=timeout,
-            text=True,
-        )    
+# Main execution
+if __name__ == "__main__":
+    print("="*50)
+    print("HELLO WORLD TEST")
+    print("="*50)
+    
+    # Step 1: Generate
+    print("\n[1/3] Generating code...")
+    response = generate_code()
+    
+    # Step 2: Extract
+    print("\n[2/3] Extracting code...")
+    code = extract_code(response)
+    
+    # Step 3: Validate
+    print("\n[3/3] Validating syntax...")
+    if not validate_syntax(code):
+        print("Code is not valid, stopping.")
+        exit(1)
+    
+    # Step 4: Run
+    print("\n[4/4] Running code...")
+    result = run_simple_test(code)
+    
+    # Print summary
+    print("\n" + "="*50)
+    if result['passed']:
+        print("✓ SUCCESS - Code executed without errors!")
+    else:
+        print("✗ FAILED - Code execution failed")
+    print("="*50)
 
-        print(result)
 
 
-
-
-
-
-
-response = generate_code()
-
-code = extract_code(response)
-validate_syntax(code)
-run_test(code)
 
