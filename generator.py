@@ -44,20 +44,20 @@ def validate_syntax(code):
     #either colid valid python or api halucinated
 
 
-    test = compile(code, 'test', 'exec')
-    if compile:
-        print("Valid python!")
+    try:
+        compile(code, '<string>', 'exec')
+        print("✓ Valid Python!")
         return True
-    else:
-        print("Not valid")
+    except SyntaxError as e:
+        print(f"✗ Syntax error: {e}")
         return False
     
-def run_test(generated_code, test_code, timeout=10):
+def run_test(generated_code, timeout=10):
     #runs pytest against generated code
     """
     args:
         generated_code: the code you'd like to test
-        test_code: the pytest test code
+        
         Timeout: max wait time to wait for test
     
     resturns:
@@ -70,13 +70,23 @@ def run_test(generated_code, test_code, timeout=10):
             errors: str
         }
     """
+
     with tempfile.TemporaryFile(mode='w+') as f:
         f.write(generated_code)
         f.seek(0)
         print('----------------------')
         print("code from Temporary >>>>>")
         print(f"{f.read()}")
-        
+
+        result = subprocess.run(
+            ['python', '-m', 'pytest', f, 'v'],
+            capture_output= True,
+            timeout=timeout,
+            text=True,
+        )    
+
+        print(result)
+
 
 
 
@@ -87,5 +97,5 @@ response = generate_code()
 
 code = extract_code(response)
 validate_syntax(code)
-run_test(code,None)
+run_test(code)
 
