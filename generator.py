@@ -2,6 +2,7 @@ import tempfile
 import os
 import anthropic
 import subprocess
+import sys
 #starting from scratrch usiing no help from ai,
 
 def generate_code():
@@ -70,7 +71,7 @@ def run_simple_test(generated_code, timeout=10):
             
             # Execute the code
             result = subprocess.run(
-                ['python3', code_path],
+                [sys.executable, code_path],
                 capture_output=True,
                 timeout=timeout,
                 text=True
