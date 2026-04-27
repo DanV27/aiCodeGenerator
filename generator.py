@@ -21,9 +21,31 @@ def generate_code(spec):
         max_tokens = 1024,
         messages = [{"role": "user", "content": code_prompt}]
     )
+    code = message.content[0].text
     print("AINTROPIC RESPONSE: \n", message.content[0].text)
     print("---------------------------------------")
-    return(message.content[0].text)
+    print("[Generating tests...]")
+
+    test_prompt = f"""You are a pytest test generator.
+    Generate pytest tests for this code specification: {spec}
+    Your tests should:
+    1. Import the function from the 'generated' module
+    2. Test normal cases
+    3. Test edge cases
+    4. Test error cases
+    Output ONLY the pytest code in a ```python code block, no explanation."""
+
+    message = client.messages.create(
+        model = "claude-opus-4-6",
+        max_tokens = 1024,
+        messages = [{"role": "user", "content": test_prompt}]
+    )
+    test_code = extract_code(message.content[0].text)
+    print("✓ Tests generated")
+
+
+
+    return code, test_code
 
 
 def extract_code (response_text):
