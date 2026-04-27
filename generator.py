@@ -5,12 +5,21 @@ import subprocess
 import sys
 #starting from scratrch usiing no help from ai,
 
-def generate_code():
+def generate_code(spec):
     client = anthropic.Anthropic()
+
+    code_prompt = f"""You are a python code generator.
+    Generate clean, valid Python code based on this specification: {spec}
+    Requirements:
+    1.Code must be syntactically valid
+    2.Include proper function signatures with type hints
+    3.include docstrings
+    Output ONLY the code in a '''python code block, no explanations, """
+
     message = client.messages.create(
         model = "claude-opus-4-6",
         max_tokens = 1024,
-        messages = [{"role": "user", "content": "You are a python code generator. Generate clean valid code to print hello world"}]
+        messages = [{"role": "user", "content": code_prompt}]
     )
     print("AINTROPIC RESPONSE: \n", message.content[0].text)
     print("---------------------------------------")
@@ -116,12 +125,14 @@ def run_simple_test(generated_code, timeout=10):
 # Main execution
 if __name__ == "__main__":
     print("="*50)
-    print("HELLO WORLD TEST")
+    print("CODE GENERATOR TEST")
     print("="*50)
     
+    user_request = input("What would you like me to code?")
+
     # Step 1: Generate
     print("\n[1/3] Generating code...")
-    response = generate_code()
+    response = generate_code(user_request)
     
     # Step 2: Extract
     print("\n[2/3] Extracting code...")
