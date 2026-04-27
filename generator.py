@@ -3,142 +3,147 @@ import os
 import anthropic
 import subprocess
 import sys
-#starting from scratrch usiing no help from ai,
+import re
+
 
 def generate_code(spec):
+    """Generate both code and tests from a user specification"""
     client = anthropic.Anthropic()
 
+    # Generate the code
     code_prompt = f"""You are a python code generator.
-    Generate clean, valid Python code based on this specification: {spec}
-    Requirements:
-    1.Code must be syntactically valid
-    2.Include proper function signatures with type hints
-    3.include docstrings
-    Output ONLY the code in a '''python code block, no explanations, """
+Generate clean, valid Python code based on this specification: {spec}
+Requirements:
+1. Code must be syntactically valid
+2. Include proper function signatures with type hints
+3. Include docstrings
+4. Use typing.Union for type hints (not the | operator) for Python 3.9+ compatibility
+Output ONLY the code in a ```python code block, no explanation."""
 
     message = client.messages.create(
-        model = "claude-opus-4-6",
-        max_tokens = 1024,
-        messages = [{"role": "user", "content": code_prompt}]
+        model="claude-opus-4-6",
+        max_tokens=1024,
+        messages=[{"role": "user", "content": code_prompt}]
     )
-    code = message.content[0].text
-    print("AINTROPIC RESPONSE: \n", message.content[0].text)
-    print("---------------------------------------")
-    print("[Generating tests...]")
+    code = extract_code(message.content[0].text)
+    print("✓ Code generated")
 
+    # Generate the tests
     test_prompt = f"""You are a pytest test generator.
-    Generate pytest tests for this code specification: {spec}
-    Your tests should:
-    1. Import the function from the 'generated' module
-    2. Test normal cases
-    3. Test edge cases
-    4. Test error cases
-    Output ONLY the pytest code in a ```python code block, no explanation."""
+Generate pytest tests for this code specification: {spec}
+Your tests should:
+1. Import the function from the 'generated' module
+2. Test normal cases
+3. Test edge cases
+4. Test error cases
+Output ONLY the pytest code in a ```python code block, no explanation."""
 
     message = client.messages.create(
-        model = "claude-opus-4-6",
-        max_tokens = 1024,
-        messages = [{"role": "user", "content": test_prompt}]
+        model="claude-opus-4-6",
+        max_tokens=1024,
+        messages=[{"role": "user", "content": test_prompt}]
     )
     test_code = extract_code(message.content[0].text)
     print("✓ Tests generated")
 
-
-
     return code, test_code
 
 
-def extract_code (response_text):
-    #this will extract code from response
-    import re #assuming code will be enclosed in tripple backticks
-
-     # Try ```python ... ```
-    pattern = r"```python\n(.*?)\n```"
-    code = re.search(pattern, response_text, re.DOTALL)
-    if code:
-        print('EXTRACTED CODE.....')
-        print("PATTERN1: ",code.group(1).strip())
-        return code.group(1).strip()
-
-    pattern = r"```\n(.*?)\n```"
-    code = re.search(pattern, response_text, re.DOTALL)
-    if code:
-        print('EXTRACTED CODE.....')
-        print("PATTERN2: ",code.group(1).strip())
-        return code.group(1).strip()
+def extract_code(response_text):
+    """Extract code from markdown code blocks"""
     
-
-    return(response_text.strip())
-
+    # Try ```python ... ```
+    pattern = r"```python\n(.*?)\n```"
+    match = re.search(pattern, response_text, re.DOTALL)
+    if match:
+        return match.group(1).strip()
+    
+    # Try ``` ... ```
+    pattern = r"```\n(.*?)\n```"
+    match = re.search(pattern, response_text, re.DOTALL)
+    if match:
+        return match.group(1).strip()
+    
+    # Return as-is if no markdown found
+    return response_text.strip()
 
 
 def validate_syntax(code):
-    #either colid valid python or api halucinated
-
-
+    """Check if code is valid Python"""
     try:
         compile(code, '<string>', 'exec')
-        print("✓ Valid Python!")
+        print("✓ Syntax valid")
         return True
     except SyntaxError as e:
         print(f"✗ Syntax error: {e}")
         return False
-    
-def run_simple_test(generated_code, timeout=10):
-    """
-    Simple version: just run the code and see if it executes
-    
-    For "Hello World" testing
-    """
+
+
+def run_test(generated_code, test_code, timeout=10):
+    """Run pytest tests against generated code"""
     try:
         # Create temporary directory
         with tempfile.TemporaryDirectory() as tmpdir:
-            # Write code to a file
+            # Write code to file
             code_path = os.path.join(tmpdir, 'generated.py')
             with open(code_path, 'w') as f:
                 f.write(generated_code)
+
+            # Write tests to file
+            test_path = os.path.join(tmpdir, 'test_generated.py')
+            with open(test_path, 'w') as f:
+                f.write(test_code)
             
-            print(f"\n--- Running code from {code_path} ---")
-            
-            # Execute the code
+            # Run pytest
             result = subprocess.run(
-                [sys.executable, code_path],
+                [sys.executable, '-m', 'pytest', test_path, '-v'],
                 capture_output=True,
                 timeout=timeout,
-                text=True
+                text=True,
+                cwd=tmpdir
             )
             
-            print(f"Output: {result.stdout}")
-            if result.stderr:
-                print(f"Errors: {result.stderr}")
+            output = result.stdout
+            errors = result.stderr
             
-            # Check if it ran successfully (exit code 0)
-            if result.returncode == 0:
-                print("✓ Code executed successfully!")
-                return {
-                    'passed': True,
-                    'output': result.stdout,
-                    'errors': result.stderr
-                }
-            else:
-                print("✗ Code execution failed!")
-                return {
-                    'passed': False,
-                    'output': result.stdout,
-                    'errors': result.stderr
-                }
+            # Count passed/failed
+            passed_count = output.count(' PASSED')
+            failed_count = output.count(' FAILED')
+            total = passed_count + failed_count
+
+            # Print results
+            if output:
+                print("\nTest Results:")
+                print(output)
+            
+            if errors:
+                print("\nErrors:")
+                print(errors)
+            
+            return {
+                'passed': failed_count == 0 and total > 0,
+                'passed_count': passed_count,
+                'failed_count': failed_count,
+                'total': total,
+                'output': output,
+                'errors': errors
+            }
     
     except subprocess.TimeoutExpired:
-        print(f"✗ Code execution timed out after {timeout}s")
         return {
             'passed': False,
+            'passed_count': 0,
+            'failed_count': 1,
+            'total': 1,
             'output': '',
             'errors': f'Timeout after {timeout}s'
         }
     except Exception as e:
-        print(f"✗ Error: {e}")
         return {
             'passed': False,
+            'passed_count': 0,
+            'failed_count': 1,
+            'total': 1,
             'output': '',
             'errors': str(e)
         }
@@ -146,37 +151,41 @@ def run_simple_test(generated_code, timeout=10):
 
 # Main execution
 if __name__ == "__main__":
-    print("="*50)
-    print("CODE GENERATOR TEST")
-    print("="*50)
+    print("="*60)
+    print("CODE GENERATION PIPELINE")
+    print("="*60)
     
-    user_request = input("What would you like me to code?")
+    user_request = input("\nWhat would you like me to code?\n> ")
 
     # Step 1: Generate
-    print("\n[1/3] Generating code...")
-    response = generate_code(user_request)
+    print("\n[1/4] Generating code and tests...")
+    code, test_code = generate_code(user_request)
     
-    # Step 2: Extract
-    print("\n[2/3] Extracting code...")
-    code = extract_code(response)
+    # Step 2: Display generated code
+    print("\n[2/4] Generated code:")
+    print("-" * 60)
+    print(code)
+    print("-" * 60)
     
     # Step 3: Validate
-    print("\n[3/3] Validating syntax...")
+    print("\n[3/4] Validating syntax...")
     if not validate_syntax(code):
         print("Code is not valid, stopping.")
         exit(1)
-    
-    # Step 4: Run
-    print("\n[4/4] Running code...")
-    result = run_simple_test(code)
+
+    # Step 4: Run tests
+    print("\n[4/4] Running tests...")
+    result = run_test(code, test_code)
     
     # Print summary
-    print("\n" + "="*50)
+    print("\n" + "="*60)
     if result['passed']:
-        print("✓ SUCCESS - Code executed without errors!")
+        print(f"✓ SUCCESS - All {result['total']} tests passed!")
     else:
-        print("✗ FAILED - Code execution failed")
-    print("="*50)
+        print(f"✗ FAILED - {result['failed_count']}/{result['total']} tests failed")
+    print("="*60)
+
+
 
 
 
