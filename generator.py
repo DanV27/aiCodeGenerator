@@ -153,11 +153,33 @@ def run_test(generated_code, test_code, timeout=10):
     
 def analyze_complexity(code):
     #using AST anaylze code complexity
+
+    #Count FUnctions
+    tree = ast.parse(code)
+    
+    functions = [
+        node for node in ast.walk(tree)
+        if isinstance(node, ast.FunctionDef)
+    ]
+    x=0
+    for i in functions:
+        x+=1
+        print(f"Function name: {i.name}")
+    print("Total functions: ",x)
+
+    #Count decision points (if. for, while, except)
+
+    #Cyclomatic complexity = 1+number of decisions
+
+
+
+
+
     return
 
 
 
-
+'''
 # Main execution
 if __name__ == "__main__":
     print("="*60)
@@ -193,7 +215,18 @@ if __name__ == "__main__":
     else:
         print(f"✗ FAILED - {result['failed_count']}/{result['total']} tests failed")
     print("="*60)
+'''
 
+x = """
+def greet(name):
+    def get_message():
+        return "Hello"
+    return f"{get_message()}, {name}"
+
+async def start():
+    pass
+"""
+analyze_complexity(x)
 
 
 
