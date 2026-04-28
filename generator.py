@@ -4,6 +4,7 @@ import anthropic
 import subprocess
 import sys
 import re
+import ast
 
 
 def generate_code(spec):
@@ -103,6 +104,7 @@ def run_test(generated_code, test_code, timeout=10):
                 cwd=tmpdir
             )
             
+            
             output = result.stdout
             errors = result.stderr
             
@@ -127,6 +129,7 @@ def run_test(generated_code, test_code, timeout=10):
                 'total': total,
                 'output': output,
                 'errors': errors
+                
             }
     
     except subprocess.TimeoutExpired:
@@ -147,6 +150,12 @@ def run_test(generated_code, test_code, timeout=10):
             'output': '',
             'errors': str(e)
         }
+    
+def analyze_complexity(code):
+    #using AST anaylze code complexity
+    return
+
+
 
 
 # Main execution
@@ -186,6 +195,23 @@ if __name__ == "__main__":
     print("="*60)
 
 
+
+
+"""
+What 2-3 metrics do you want to track?
+-Execution time
+-How complex it is (lines of code]
+
+How would you measure if code is "slow"?
+-see how long execution time is
+
+What optimizations are most important for your use case?
+-Optimizing the big O and execution time
+
+How many times should you retry if an optimization fails?
+-Once, if optimization fails lets keep it at that for now
+
+"""
 
 
 

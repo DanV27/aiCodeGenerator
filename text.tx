@@ -55,3 +55,31 @@ We need to create mutiple functions to get what we want,
     generate -> validate -> test
 
     return test results, code, 
+
+
+
+Building Block Strategy
+Do this in order:
+Week 2a (2-3 hours):
+
+Add complexity analysis (you can use AST for this)
+Add execution time measurement
+Display both metrics before/after
+
+Week 2b (2-3 hours):
+
+Create an optimization prompt for Claude
+Generate an optimized version
+Validate it still passes tests
+
+Week 2c (2-3 hours):
+
+Compare metrics side-by-side
+Add retry logic if optimization fails
+Save results to JSON
+
+Week 2d (2-3 hours):
+
+Polish the output
+Make it look professional
+Test with multiple specs
