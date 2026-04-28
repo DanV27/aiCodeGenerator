@@ -158,14 +158,19 @@ def analyze_complexity(code):
     tree = ast.parse(code)
     
     functions = [
-        node for node in ast.walk(tree)
+        node.name for node in ast.walk(tree)
         if isinstance(node, ast.FunctionDef)
     ]
-    x=0
-    for i in functions:
-        x+=1
-        print(f"Function name: {i.name}")
-    print("Total functions: ",x)
+    
+    decisions = [node for node in ast.walk(tree)
+        if isinstance(node, (ast.If, ast.For, ast.While, ast.ExceptHandler))
+    ]
+    
+
+    print("Total functions: ",len(functions))
+    print("Functions: ", functions)
+    print("Decisions: ", decisions)
+
 
     #Count decision points (if. for, while, except)
 
@@ -216,17 +221,11 @@ if __name__ == "__main__":
         print(f"✗ FAILED - {result['failed_count']}/{result['total']} tests failed")
     print("="*60)
 '''
+with open('testfunction.py', 'r') as file:
+    content = file.read()
 
-x = """
-def greet(name):
-    def get_message():
-        return "Hello"
-    return f"{get_message()}, {name}"
 
-async def start():
-    pass
-"""
-analyze_complexity(x)
+analyze_complexity(content)
 
 
 
