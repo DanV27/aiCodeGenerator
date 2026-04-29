@@ -103,6 +103,17 @@ def run_test(generated_code, test_code, timeout=10):
                 text=True,
                 cwd=tmpdir
             )
+
+            #complexity = analyze_complexity(generated_code)
+
+            complexity_data = analyze_complexity(generated_code)
+
+            print('--Complexity analyzed--') #THIS IS NOT WORKING
+            print(f"complexity: {complexity_data['cyclomatic_complexity']}, "
+                  f"lines: {complexity_data['lines_of_code']}, "
+                  f"func: {complexity_data['num_functions']}, "
+                  f"names: {complexity_data['function_names']}, "
+                  f"Decisions: {complexity_data['decision_points']}")
             
             
             output = result.stdout
@@ -165,26 +176,20 @@ def analyze_complexity(code):
     decisions = sum(1 for node in ast.walk(tree)
         if isinstance(node, (ast.If, ast.For, ast.While, ast.ExceptHandler)))
     
-    
+    cyclomatic = 1 + decisions
 
-    print("Total functions: ",len(functions))
-    print("Functions: ", functions)
-    print("Decisions: ", decisions)
-
-
-    #Count decision points (if. for, while, except)
-
-    #Cyclomatic complexity = 1+number of decisions
-
+    return { 
+            'cyclomatic_complexity': cyclomatic,
+            'lines_of_code': len(code.split('\n')),
+            'num_functions': len(functions),
+            'function_names': functions,
+            'decision_points': decisions
+        }
 
 
 
 
-    return
 
-
-
-'''
 # Main execution
 if __name__ == "__main__":
     print("="*60)
@@ -220,12 +225,8 @@ if __name__ == "__main__":
     else:
         print(f"✗ FAILED - {result['failed_count']}/{result['total']} tests failed")
     print("="*60)
-'''
-with open('testfunction.py', 'r') as file:
-    code = file.read()
 
 
-analyze_complexity(code)
 
 
 
