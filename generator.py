@@ -162,9 +162,9 @@ def analyze_complexity(code):
         if isinstance(node, ast.FunctionDef)
     ]
     
-    decisions = [node for node in ast.walk(tree)
-        if isinstance(node, (ast.If, ast.For, ast.While, ast.ExceptHandler))
-    ]
+    decisions = sum(1 for node in ast.walk(tree)
+        if isinstance(node, (ast.If, ast.For, ast.While, ast.ExceptHandler)))
+    
     
 
     print("Total functions: ",len(functions))
@@ -222,10 +222,10 @@ if __name__ == "__main__":
     print("="*60)
 '''
 with open('testfunction.py', 'r') as file:
-    content = file.read()
+    code = file.read()
 
 
-analyze_complexity(content)
+analyze_complexity(code)
 
 
 
