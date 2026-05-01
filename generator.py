@@ -124,7 +124,7 @@ def run_test(generated_code, test_code, timeout=10):
             failed_count = output.count(' FAILED')
             total = passed_count + failed_count
 
-            # Print results
+            # Print results NEEDS FIXING TOO MUCH ON TERMINAL
             if output:
                 print("\nTest Results:")
                 print(output)
@@ -186,6 +186,12 @@ def analyze_complexity(code):
             'decision_points': decisions
         }
 
+def detect_and_analyze_failures(code, test_code, test_results):
+        """
+        When tests fail, identify the issue and ask Claude to fix it
+    
+        Returns: (fixed_code, success)
+        """
 
 
 
