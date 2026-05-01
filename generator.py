@@ -186,13 +186,57 @@ def analyze_complexity(code):
             'decision_points': decisions
         }
 
-def detect_and_analyze_failures(code, test_code, test_results):
-        """
-        When tests fail, identify the issue and ask Claude to fix it
+def fix_code(code, test_code, test_result):
+    """
+    Generate a fixed version of the code based on test failures
     
-        Returns: (fixed_code, success)
-        """
+    Returns: fixed_code (string)
+    """
+    client = anthropic.Anthropic()
+    
+    # Extract error patterns
+    failures = test_result['output']
+    
+    # Identify the issue
+    if "AttributeError" in failures:
+        issue = "Type mismatch: code expects objects, tests use dictionaries"
+    elif "ImportError" in failures:
+        issue = "Missing imports or import errors"
+    elif "ValueError" in failures:
+        issue = "Logic error: validation too strict"
+    elif "TypeError" in failures:
+        issue = "Type error: wrong argument types"
+    else:
+        issue = "Test failure: incompatibility between code and tests"
+    
+    # Ask Claude to fix
+    fix_prompt = f"""The generated code has test failures. Fix it to pass all tests.
 
+    Issue: {issue}
+
+    Original code:
+    {code}
+
+    Test failures (first 1000 chars):
+    {failures[:1000]}
+
+    Tests:
+    {test_code[:500]}
+
+    Requirements:
+    1. Fix ONLY the code, not the tests
+    2. Keep the same function signatures
+    3. Make it compatible with how tests use it
+    4. Be conservative - minimal changes"""
+    
+    message = client.messages.create(
+        model="claude-opus-4-6",
+        max_tokens=1024,
+        messages=[{"role": "user", "content": fix_prompt}]
+    )
+    
+    fixed_code = extract_code(message.content[0].text)
+    return fixed_code
 
 
 
@@ -230,7 +274,10 @@ if __name__ == "__main__":
         print(f"✓ SUCCESS - All {result['total']} tests passed!")
     else:
         print(f"✗ FAILED - {result['failed_count']}/{result['total']} tests failed")
+        fix_code(code, test_code, result)
     print("="*60)
+
+    ###MAKE FULL pipline funciton
 
 
 
