@@ -239,9 +239,7 @@ def fix_code(code, test_code, test_result):
     return fixed_code
 
 
-
-# Main execution
-if __name__ == "__main__":
+def run_pipeline():
     print("="*60)
     print("CODE GENERATION PIPELINE")
     print("="*60)
@@ -255,9 +253,9 @@ if __name__ == "__main__":
     # Step 2: Display generated code
     print("\n[2/4] Generated code:")
     print("-" * 60)
-    print(code)
+    print(code)  # ← NO extract_code() call
     print("-" * 60)
-    
+
     # Step 3: Validate
     print("\n[3/4] Validating syntax...")
     if not validate_syntax(code):
@@ -274,8 +272,33 @@ if __name__ == "__main__":
         print(f"✓ SUCCESS - All {result['total']} tests passed!")
     else:
         print(f"✗ FAILED - {result['failed_count']}/{result['total']} tests failed")
-        fix_code(code, test_code, result)
+        print("\nAttempting to fix...")
+        
+        new_code = fix_code(code, test_code, result)
+        
+        # Validate the fixed code
+        if not validate_syntax(new_code):
+            print("Fixed code has syntax errors.")
+            exit(1)
+        
+        # Test the fixed code
+        new_result = run_test(new_code, test_code)
+        
+        print("\n" + "="*60)
+        if new_result['passed']:
+            print(f"✓ SUCCESS AFTER FIX - All {new_result['total']} tests passed!")
+            code = new_code  # Use the fixed code
+        else: 
+            print(f"✗ STILL FAILED - {new_result['failed_count']}/{new_result['total']} tests failed")
+
     print("="*60)
+    return code
+
+
+
+# Main execution
+if __name__ == "__main__":
+    run_pipeline()
 
     ###MAKE FULL pipline funciton
 
