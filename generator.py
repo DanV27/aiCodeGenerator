@@ -23,7 +23,7 @@ Output ONLY the code in a ```python code block, no explanation."""
 
     message = client.messages.create(
         model="claude-opus-4-6",
-        max_tokens=1024,
+        max_tokens=2048,
         messages=[{"role": "user", "content": code_prompt}]
     )
     code = extract_code(message.content[0].text)
@@ -41,7 +41,7 @@ Output ONLY the pytest code in a ```python code block, no explanation."""
 
     message = client.messages.create(
         model="claude-opus-4-6",
-        max_tokens=1024,
+        max_tokens=2048,
         messages=[{"role": "user", "content": test_prompt}]
     )
     test_code = extract_code(message.content[0].text)
@@ -53,19 +53,23 @@ Output ONLY the pytest code in a ```python code block, no explanation."""
 def extract_code(response_text):
     """Extract code from markdown code blocks"""
     
-    # Try ```python ... ```
-    pattern = r"```python\n(.*?)\n```"
-    match = re.search(pattern, response_text, re.DOTALL)
-    if match:
-        return match.group(1).strip()
+    # Just find the first ``` and last ```
+    if "```" not in response_text:
+        return response_text.strip()
     
-    # Try ``` ... ```
-    pattern = r"```\n(.*?)\n```"
-    match = re.search(pattern, response_text, re.DOTALL)
-    if match:
-        return match.group(1).strip()
+    # Find start of code block (skip the language identifier)
+    start = response_text.find("```")
+    start = response_text.find("\n", start) + 1
     
-    # Return as-is if no markdown found
+    # Find end of code block
+    end = response_text.rfind("```")
+    
+    # Extract and clean
+    if end > start:
+        code = response_text[start:end].strip()
+        return code
+    
+    # Fallback
     return response_text.strip()
 
 
@@ -231,7 +235,7 @@ def fix_code(code, test_code, test_result):
     
     message = client.messages.create(
         model="claude-opus-4-6",
-        max_tokens=1024,
+        max_tokens=2048,
         messages=[{"role": "user", "content": fix_prompt}]
     )
     
@@ -249,6 +253,12 @@ def run_pipeline():
     # Step 1: Generate
     print("\n[1/4] Generating code and tests...")
     code, test_code = generate_code(user_request)
+
+    # DEBUG: Check what we got back
+    print("\n[DEBUG]")
+    print(f"Code starts with: {repr(code[:40])}")
+    print(f"Has backticks at start? {code.startswith('```')}")
+    print(f"Code is valid Python? {code.startswith('from') or code.startswith('def') or code.startswith('class')}")
     
     # Step 2: Display generated code
     print("\n[2/4] Generated code:")
@@ -300,27 +310,7 @@ def run_pipeline():
 if __name__ == "__main__":
     run_pipeline()
 
-    ###MAKE FULL pipline funciton
 
-
-
-
-
-"""
-What 2-3 metrics do you want to track?
--Execution time
--How complex it is (lines of code]
-
-How would you measure if code is "slow"?
--see how long execution time is
-
-What optimizations are most important for your use case?
--Optimizing the big O and execution time
-
-How many times should you retry if an optimization fails?
--Once, if optimization fails lets keep it at that for now
-
-"""
 
 
 
