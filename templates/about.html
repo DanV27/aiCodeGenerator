@@ -170,12 +170,26 @@
         </a>
         {% else %}
         <a href="{{ url_for('login') }}"
+          class="text-on-surface-variant font-label-md text-label-md hidden sm:inline hover:text-secondary transition-colors">
+          Log in
+        </a>
+        <a href="{{ url_for('signup') }}"
           class="bg-primary text-on-primary px-md py-xs font-label-md text-label-md cursor-pointer active:opacity-80 rounded-lg">
-          Log In
+          Sign up
         </a>
         {% endif %}
       </div>
     </div>
+    {% if session.get('guest') %}
+    <div class="w-full bg-secondary-container/10 border-t border-outline-variant">
+      <div class="flex items-center justify-center gap-xs px-margin py-1 max-w-7xl mx-auto text-center">
+        <span class="font-label-md text-label-md text-on-surface-variant">
+          You're browsing as a guest —
+          <a href="{{ url_for('signup') }}" class="text-primary underline hover:no-underline">sign up to save your progress</a>.
+        </span>
+      </div>
+    </div>
+    {% endif %}
   </header>
 
   <!-- Sidebar overlay -->
@@ -244,6 +258,11 @@
             Think of it as a personal Python tutor focused on one language done well — an alternative to the
             ad-heavy, copy-paste-friendly reference sites. Every lesson is a working, tested implementation
             you can run.
+          </p>
+          <p class="font-body-md text-on-surface-variant max-w-2xl">
+            No account needed to try it out — hit <span class="font-code text-secondary-container">Continue as
+            guest</span> on the login page to browse every lesson, run challenges, and use the AI tutor right
+            away. Sign up whenever you want your progress saved.
           </p>
           <div class="flex flex-wrap gap-xs pt-xs">
             <span
@@ -350,6 +369,18 @@
             <p class="font-body-md text-on-surface-variant">No popups, no cookie banners, no SEO sludge — just
               the lesson, the code, and the challenge.</p>
           </div>
+          <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col gap-xs">
+            <span class="material-symbols-outlined text-secondary-container">description</span>
+            <p class="font-headline-md text-headline-md text-on-surface">Cheat Sheets</p>
+            <p class="font-body-md text-on-surface-variant">Quick-reference sheets linked from the sidebar and
+              from related lessons — syntax and signatures at a glance, no need to re-read the full lesson.</p>
+          </div>
+          <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col gap-xs">
+            <span class="material-symbols-outlined text-secondary-container">person_off</span>
+            <p class="font-headline-md text-headline-md text-on-surface">No Account Needed</p>
+            <p class="font-body-md text-on-surface-variant">Continue as a guest to browse lessons, run challenges,
+              and use the AI tutor instantly. Sign up any time to save your progress.</p>
+          </div>
         </div>
       </section>
 
@@ -427,6 +458,8 @@
           <h2 class="font-headline-lg text-headline-lg text-white">How To Use</h2>
         </div>
         <ol class="font-label-technical text-label-technical text-white/80 flex flex-col gap-xs pl-sm">
+          <li><span class="text-white/40">$ </span>no account? click <span class="text-secondary-container">Continue as guest</span>
+            on the login page — sign up later to save your progress</li>
           <li><span class="text-white/40">$ </span>click <span class="text-secondary-container">Topics</span> in the
             header to open the sidebar — or hit the <a class="underline decoration-white/30 hover:text-white" href="/">Home</a>
             page for the topic grid</li>
